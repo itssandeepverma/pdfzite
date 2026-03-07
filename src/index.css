@@ -36,6 +36,7 @@ body {
 
 body.toolzite-embed {
   background: transparent;
+  min-height: auto;
 }
 
 #root.toolzite-embed-root {

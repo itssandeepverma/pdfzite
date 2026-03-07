@@ -86,6 +86,7 @@
   text-decoration: none;
   font-weight: 700;
   font-size: 0.88rem;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease, background 0.18s ease;
 }
 
 .utility-nav a:hover,
@@ -93,6 +94,8 @@
 .utility-footer-links a:hover {
   background: var(--brand-gradient);
   color: #102316;
+  border-color: transparent;
+  box-shadow: 0 12px 28px rgba(0, 156, 62, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.34);
 }
 
 .app {
@@ -102,6 +105,7 @@
   gap: 24px;
   padding: 20px 0 24px;
   color: var(--ink);
+  align-items: start;
 }
 
 .toolzite-shell.embed-mode .app {
@@ -117,71 +121,84 @@
   position: sticky;
   top: 92px;
   height: fit-content;
+  display: flex;
+  flex-direction: column;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
   backdrop-filter: blur(8px);
 }
 
 .toolzite-shell.embed-mode .sidebar {
-  top: 14px;
+  top: 6px;
+  max-height: calc(100vh - 12px);
 }
 
-.brand {
-  margin-bottom: 18px;
-}
-
-.brand-title {
-  margin: 6px 0 2px;
-  font-weight: 600;
-  font-size: 18px;
-}
-
-.badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 14px;
-  background: var(--brand-gradient);
-  color: #0f172a;
-  border-radius: 999px;
-  font-weight: 600;
-  letter-spacing: 0.02em;
+.toolzite-shell.embed-mode .tool-stack {
+  max-height: calc(100vh - 190px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 6px;
 }
 
 .tool-stack {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
   gap: 10px;
   max-height: calc(100vh - 240px);
   overflow: auto;
+  min-height: 0;
   padding-right: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(0, 156, 62, 0.42) rgba(255, 255, 255, 0.4);
+}
+
+.tool-stack::-webkit-scrollbar {
+  width: 8px;
+}
+
+.tool-stack::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.42);
+  border-radius: 999px;
+}
+
+.tool-stack::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(0, 156, 62, 0.82), rgba(172, 236, 32, 0.82));
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.55);
+}
+
+.tool-stack::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(0, 156, 62, 0.95), rgba(172, 236, 32, 0.95));
 }
 
 .tool {
   width: 100%;
   text-align: left;
-  background: #f7fbf1;
-  border: 1px solid rgba(0, 156, 62, 0.08);
-  border-radius: 16px;
+  background: #fbfdf8;
+  border: 0;
+  border-radius: 18px;
   padding: 14px 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
   cursor: pointer;
-  transition: all 0.18s ease;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
   color: inherit;
+  text-decoration: none;
+  box-shadow: inset 0 0 0 1px #d6dfd4;
+  transform: translateZ(0);
 }
 
 .tool:hover {
   transform: translateY(-2px);
-  border-color: rgba(0, 156, 62, 0.35);
-  box-shadow: 0 12px 30px rgba(0, 156, 62, 0.15);
+  box-shadow: 0 10px 20px rgba(23, 53, 34, 0.08), inset 0 0 0 1px #d6dfd4;
 }
 
 .tool.active {
   background: var(--brand-gradient);
   color: #0b1f12;
-  border-color: rgba(0, 156, 62, 0.45);
+  box-shadow: 0 16px 34px rgba(0, 156, 62, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.34);
 }
 
 .utility-footer {
@@ -211,38 +228,9 @@
 }
 
 .hero h1 {
-  margin: 4px 0 6px;
+  margin: 0 0 6px;
   font-size: 28px;
   letter-spacing: -0.01em;
-}
-
-.hero-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 14px;
-  background: var(--brand-gradient);
-  color: #0b1f12;
-  border-radius: 999px;
-  font-weight: 600;
-}
-
-.hero-badge p {
-  margin: 0;
-  line-height: 1.2;
-}
-
-.message-icon {
-  width: 18px;
-  height: 18px;
-  border-radius: 999px;
-  border: 1px solid rgba(11, 31, 18, 0.25);
-  background: rgba(255, 255, 255, 0.45);
-  display: inline-grid;
-  place-items: center;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1;
 }
 
 .panel {
@@ -262,12 +250,8 @@
   margin-bottom: 14px;
 }
 
-.eyebrow {
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  font-size: 11px;
-  color: #475569;
-  margin: 0 0 2px;
+.panel-heading h3 {
+  margin: 0;
 }
 
 .dropzone {
@@ -428,9 +412,10 @@
 }
 
 .rotate-angle-btn.active {
-  border-color: rgba(0, 156, 62, 0.35);
+  border-color: transparent;
   background: var(--brand-gradient);
   color: #0b1f12;
+  box-shadow: 0 12px 28px rgba(0, 156, 62, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.32);
 }
 
 .rotate-angle-icon {
@@ -500,18 +485,52 @@
   flex-direction: column;
   gap: 4px;
   padding: 10px 12px;
-  border-radius: 12px;
-  background: rgba(15, 23, 42, 0.05);
+  border-radius: 16px;
+  background: #fbfdf8;
   border: 1px solid transparent;
   min-width: 120px;
   cursor: pointer;
   text-align: left;
+  color: #2a3830;
+  box-shadow: inset 0 0 0 1px #d6dfd4;
+  transform: translateZ(0);
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.pill:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 20px rgba(23, 53, 34, 0.08), inset 0 0 0 1px #d6dfd4;
+}
+
+.sidebar-pill-row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 10px 0 10px;
+}
+
+.sidebar-pill {
+  border-radius: 999px;
+  width: 100%;
+  min-width: 0;
+  min-height: 52px;
+  padding: 8px 12px;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.sidebar-pill .pill-title {
+  font-size: 0.82rem;
+  letter-spacing: 0.02em;
+  line-height: 1.1;
 }
 
 .pill-active {
-  border-color: rgba(0, 156, 62, 0.35);
+  border-color: transparent;
   background: var(--brand-gradient);
   color: #0b1f12;
+  box-shadow: 0 12px 28px rgba(0, 156, 62, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.3);
 }
 
 .pill-title {
@@ -649,7 +668,7 @@ button.action {
   letter-spacing: 0.01em;
   cursor: pointer;
   transition: transform 0.14s ease, box-shadow 0.14s ease, opacity 0.14s ease;
-  box-shadow: 0 16px 40px rgba(0, 156, 62, 0.18);
+  box-shadow: 0 16px 40px rgba(0, 156, 62, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.32);
 }
 
 button.action:disabled {

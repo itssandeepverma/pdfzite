@@ -1,6 +1,6 @@
 import type { CSSProperties, ChangeEvent, FormEvent, MouseEvent, ReactNode } from 'react'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { Document as DocxDocument, Packer, Paragraph } from 'docx'
 import JSZip from 'jszip'
 import { diffWords } from 'diff'
@@ -374,7 +374,8 @@ function App() {
 
   useEffect(() => {
     const nextPath = getToolPath(activeTool)
-    if (location.pathname !== nextPath) {
+    const isToolRoute = location.pathname.startsWith('/tools/')
+    if (!isToolRoute && location.pathname !== nextPath) {
       navigate(
         {
           pathname: nextPath,
@@ -406,12 +407,20 @@ function App() {
   useEffect(() => {
     if (!isEmbedded || typeof window === 'undefined') return undefined
 
+    const getShellHeight = () => {
+      const shell = document.querySelector('.toolzite-shell') as HTMLElement | null
+      if (!shell) {
+        return Math.max(document.body.scrollHeight, document.documentElement.scrollHeight)
+      }
+      return Math.max(shell.scrollHeight, shell.offsetHeight, Math.ceil(shell.getBoundingClientRect().height))
+    }
+
     const postHeight = () => {
       window.parent.postMessage(
         {
           type: 'toolzite:embed-height',
           kind: 'pdf',
-          height: Math.max(document.body.scrollHeight, document.documentElement.scrollHeight),
+          height: getShellHeight(),
         },
         '*',
       )
@@ -438,8 +447,10 @@ function App() {
         ? new ResizeObserver(() => postHeight())
         : null
 
-    resizeObserver?.observe(document.body)
-    resizeObserver?.observe(document.documentElement)
+    const shell = document.querySelector('.toolzite-shell')
+    if (shell) {
+      resizeObserver?.observe(shell)
+    }
     window.addEventListener('resize', postHeight)
 
     return () => {
@@ -1115,7 +1126,6 @@ function App() {
     <section className="panel">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">Slim down</p>
           <h3>Compression</h3>
         </div>
         {compressFile && <span className="chip">{formatBytes(compressFile.size)}</span>}
@@ -1216,7 +1226,6 @@ function App() {
     <section className="panel">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">Combine</p>
           <h3>Merge PDFs</h3>
         </div>
         {mergeFiles.length > 0 && <span className="chip">{mergeFiles.length} file(s)</span>}
@@ -1270,7 +1279,6 @@ function App() {
     <section className="panel">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">Extract</p>
           <h3>Split PDF</h3>
         </div>
         {splitFile && <span className="chip">{formatBytes(splitFile.size)}</span>}
@@ -1320,7 +1328,6 @@ function App() {
     <section className="panel">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">Convert</p>
           <h3>PDF → JPG ZIP</h3>
         </div>
         {pdfToJpgFile && <span className="chip">{formatBytes(pdfToJpgFile.size)}</span>}
@@ -1357,7 +1364,6 @@ function App() {
     <section className="panel">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">Convert</p>
           <h3>Images → PDF</h3>
         </div>
         {jpgToPdfFiles.length > 0 && <span className="chip">{jpgToPdfFiles.length} image(s)</span>}
@@ -1402,7 +1408,6 @@ function App() {
     <section className="panel">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">Arrange</p>
           <h3>Organize PDF pages</h3>
         </div>
         {organizePageOrder.length > 0 && <span className="chip">{organizePageOrder.length} page(s)</span>}
@@ -1465,7 +1470,6 @@ function App() {
     <section className="panel">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">Rotate</p>
           <h3>Rotate PDF</h3>
         </div>
         {rotatePdfFile && <span className="chip">{formatBytes(rotatePdfFile.size)}</span>}
@@ -1517,7 +1521,6 @@ function App() {
     <section className="panel">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">Label</p>
           <h3>Page numbers</h3>
         </div>
         {pageNumberFile && <span className="chip">{formatBytes(pageNumberFile.size)}</span>}
@@ -1569,7 +1572,6 @@ function App() {
     <section className="panel">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">Extract</p>
           <h3>PDF → Word</h3>
         </div>
         {pdfToWordFile && <span className="chip">{formatBytes(pdfToWordFile.size)}</span>}
@@ -1606,7 +1608,6 @@ function App() {
     <section className="panel">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">Image</p>
           <h3>Reduce size</h3>
         </div>
         {reduceImageFile && <span className="chip">{formatBytes(reduceImageFile.size)}</span>}
@@ -1676,7 +1677,6 @@ function App() {
     <section className="panel">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">Image</p>
           <h3>Adjust pixels</h3>
         </div>
         {resizeImageFile && <span className="chip">{formatBytes(resizeImageFile.size)}</span>}
@@ -1753,7 +1753,6 @@ function App() {
     <section className="panel">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">Image</p>
           <h3>Crop</h3>
         </div>
         {cropImageFile && <span className="chip">{formatBytes(cropImageFile.size)}</span>}
@@ -1837,7 +1836,6 @@ function App() {
     <section className="panel">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">Image</p>
           <h3>Rotate</h3>
         </div>
         {rotateImageFile && <span className="chip">{formatBytes(rotateImageFile.size)}</span>}
@@ -1914,7 +1912,6 @@ function App() {
     <section className="panel">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">Image</p>
           <h3>Add signature</h3>
         </div>
         {signatureImageFile && <span className="chip">{formatBytes(signatureImageFile.size)}</span>}
@@ -1987,7 +1984,6 @@ function App() {
     <section className="panel">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">Image</p>
           <h3>Add DOB</h3>
         </div>
         {dobImageFile && <span className="chip">{formatBytes(dobImageFile.size)}</span>}
@@ -2040,7 +2036,6 @@ function App() {
     <section className="panel">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">Image</p>
           <h3>Add border</h3>
         </div>
         {borderImageFile && <span className="chip">{formatBytes(borderImageFile.size)}</span>}
@@ -2104,7 +2099,6 @@ function App() {
     <section className="panel">
       <div className="panel-heading">
         <div>
-          <p className="eyebrow">Compare</p>
           <h3>Code diff checker</h3>
         </div>
       </div>
@@ -2160,7 +2154,6 @@ function App() {
       <section className="panel">
         <div className="panel-heading">
           <div>
-            <p className="eyebrow">Text</p>
             <h3>Word & character count</h3>
           </div>
         </div>
@@ -2218,11 +2211,11 @@ function App() {
       {!isEmbedded && (
         <header className="utility-header">
           <div className="utility-brand">
-            <a href="https://www.toolzite.com/" className="utility-brand-badge" aria-label="ToolZite home">
+            <a href="https://www.toolzite.com/" className="utility-brand-badge" aria-label="Home">
               TZ
             </a>
             <div>
-              <p className="utility-brand-eyebrow">ToolZite</p>
+              <p className="utility-brand-eyebrow">PDF Tools</p>
               <h1 className="utility-brand-title">Document, image, and browser-side utility tools.</h1>
             </div>
           </div>
@@ -2237,11 +2230,6 @@ function App() {
 
       <div className="app">
         <aside className="sidebar">
-          <div className="brand">
-            <div className="badge">ToolZite Utilities</div>
-            <p className="brand-title">Every file workflow under the same ToolZite hood.</p>
-            <p className="muted tiny">Each utility has its own direct URL and runs locally in your browser.</p>
-          </div>
           <div className="control">
             <input
               type="text"
@@ -2250,11 +2238,11 @@ function App() {
               onChange={(e) => setToolSearch(e.target.value)}
             />
           </div>
-          <div className="pill-row">
+          <div className="pill-row sidebar-pill-row">
             {['all', 'pdf', 'image', 'code', 'text'].map((value) => (
               <button
                 key={value}
-                className={`pill ${category === value ? 'pill-active' : ''}`}
+                className={`pill sidebar-pill ${category === value ? 'pill-active' : ''}`}
                 onClick={() => setCategory(value as typeof category)}
               >
                 <span className="pill-title">{value.toUpperCase()}</span>
@@ -2263,9 +2251,13 @@ function App() {
           </div>
           <div className="tool-stack scrollable">
             {visibleTools.map((tool) => (
-              <button
+              <Link
                 key={tool.id}
                 className={`tool ${tool.id === activeTool ? 'active' : ''}`}
+                to={{
+                  pathname: getToolPath(tool.id),
+                  search: location.search,
+                }}
                 onClick={() => {
                   setActiveTool(tool.id)
                   resetMessages()
@@ -2273,10 +2265,9 @@ function App() {
               >
                 <div>
                   <p className="tool-label">{tool.label}</p>
-                  <p className="muted tiny">{tool.tagline}</p>
                 </div>
                 <span>↗</span>
-              </button>
+              </Link>
             ))}
           </div>
         </aside>
@@ -2288,15 +2279,8 @@ function App() {
         >
           <header className="hero">
             <div>
-              <p className="eyebrow">ToolZite active utility</p>
               <h1>{currentTool.label}</h1>
               <p className="muted">{currentTool.description}</p>
-            </div>
-            <div className="hero-badge">
-              <span className="message-icon" aria-hidden>
-                i
-              </span>
-              <p className="tiny">Direct route: {getToolPath(activeTool)}</p>
             </div>
           </header>
 
@@ -2323,9 +2307,9 @@ function App() {
 
       {!isEmbedded && (
         <footer className="utility-footer">
-          <span>ToolZite PDF and Utility Tools</span>
+          <span>PDF and utility tools</span>
           <div className="utility-footer-links">
-            <a href="https://www.toolzite.com/">ToolZite Home</a>
+            <a href="https://www.toolzite.com/">Home</a>
             <a href="https://www.toolzite.com/allcategory">All Categories</a>
             <a href={`https://www.toolzite.com/pdf-tools${getToolPath(activeTool)}`}>Share This Tool</a>
           </div>
