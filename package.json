@@ -9,13 +9,13 @@
     "gcp-build": "npm run build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start": "vite preview --host 0.0.0.0 --port 8080"
+    "start": "vite preview --host 0.0.0.0 --port 8082"
   },
   "dependencies": {
     "diff": "^8.0.3",
     "docx": "^9.5.1",
     "jszip": "^3.10.1",
-    
+
     "pdf-lib": "^1.17.1",
     "pdfjs-dist": "^5.4.530",
     "react": "^19.2.0",
