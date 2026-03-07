@@ -8,38 +8,12 @@ import { GlobalWorkerOptions, getDocument } from 'pdfjs-dist'
 import workerSrc from 'pdfjs-dist/build/pdf.worker.min.mjs?url'
 import { PDFDocument, StandardFonts, degrees, rgb } from 'pdf-lib'
 import './App.css'
+import { tools, type ToolKey } from './toolDefinitions'
 
 GlobalWorkerOptions.workerSrc = workerSrc
 
 type CompressionPreset = 'low' | 'medium' | 'high'
 type CompressionChoice = CompressionPreset | 'custom'
-type ToolKey =
-  | 'compress'
-  | 'merge'
-  | 'split'
-  | 'pdf-to-jpg'
-  | 'jpg-to-pdf'
-  | 'organize-pdf'
-  | 'rotate-pdf'
-  | 'page-numbers'
-  | 'pdf-to-word'
-  | 'image-reduce'
-  | 'image-resize'
-  | 'image-crop'
-  | 'image-rotate'
-  | 'image-signature'
-  | 'image-dob'
-  | 'image-border'
-  | 'code-diff'
-  | 'count-text'
-
-type ToolInfo = {
-  id: ToolKey
-  label: string
-  description: string
-  tagline: string
-  category: 'pdf' | 'image' | 'code' | 'text'
-}
 
 const compressionPresets: Record<
   CompressionChoice,
@@ -51,134 +25,20 @@ const compressionPresets: Record<
   custom: { label: 'Custom', scale: 0.82, quality: 0.86, detail: 'Fine-tune with the slider.' },
 }
 
-const tools: ToolInfo[] = [
-  {
-    id: 'compress',
-    label: 'Compress PDF',
-    tagline: 'Three presets that keep pages crisp.',
-    description: 'Rasterizes each page at tuned quality levels to trim size while guarding against blur.',
-    category: 'pdf',
-  },
-  {
-    id: 'merge',
-    label: 'Merge PDFs',
-    tagline: 'Stack multiple PDFs into one.',
-    description: 'Reorder and unify files locally—no uploads, no size limits.',
-    category: 'pdf',
-  },
-  {
-    id: 'split',
-    label: 'Split PDF',
-    tagline: 'Slice by page range.',
-    description: 'Extract exact pages with simple ranges like 1-3,7.',
-    category: 'pdf',
-  },
-  {
-    id: 'pdf-to-jpg',
-    label: 'PDF → JPG bundle',
-    tagline: 'Render pages into images.',
-    description: 'Each page turns into a JPG inside a ZIP, ready for quick sharing.',
-    category: 'pdf',
-  },
-  {
-    id: 'jpg-to-pdf',
-    label: 'JPG → PDF',
-    tagline: 'Build a PDF from images.',
-    description: 'Drop JPG/PNG files, keep order, and export a clean PDF.',
-    category: 'pdf',
-  },
-  {
-    id: 'organize-pdf',
-    label: 'Organize PDF pages',
-    tagline: 'Change page order.',
-    description: 'Load a PDF, reorder pages with arrows, then export.',
-    category: 'pdf',
-  },
-  {
-    id: 'rotate-pdf',
-    label: 'Rotate PDF',
-    tagline: 'Rotate every page.',
-    description: 'Rotate pages by 90/180/270 degrees without re-uploading.',
-    category: 'pdf',
-  },
-  {
-    id: 'page-numbers',
-    label: 'Add page numbers',
-    tagline: 'Number every page.',
-    description: 'Adds centered page numbers in a single pass.',
-    category: 'pdf',
-  },
-  {
-    id: 'pdf-to-word',
-    label: 'PDF → Word',
-    tagline: 'Extract text into DOCX.',
-    description: 'Pulls text content locally and drops it into a .docx document.',
-    category: 'pdf',
-  },
-  {
-    id: 'image-reduce',
-    label: 'Reduce image size',
-    tagline: 'Scale down & compress safely.',
-    description: 'Resize with gentle quality controls to avoid blur.',
-    category: 'image',
-  },
-  {
-    id: 'image-resize',
-    label: 'Adjust pixels',
-    tagline: 'Exact width/height.',
-    description: 'Set pixel dimensions directly—great for banners or thumbs.',
-    category: 'image',
-  },
-  {
-    id: 'image-crop',
-    label: 'Crop image',
-    tagline: 'Keep only the focus.',
-    description: 'Crop by percentage bounds to isolate the area you need.',
-    category: 'image',
-  },
-  {
-    id: 'image-rotate',
-    label: 'Rotate image',
-    tagline: 'Turn by right angles.',
-    description: 'Rotate 90/180/270 degrees and download instantly.',
-    category: 'image',
-  },
-  {
-    id: 'image-signature',
-    label: 'Add signature',
-    tagline: 'Overlay a signoff.',
-    description: 'Add a signature text overlay in the corner of an image.',
-    category: 'image',
-  },
-  {
-    id: 'image-dob',
-    label: 'Stamp DOB',
-    tagline: 'Add date of birth text.',
-    description: 'Overlay a DOB label on your image for quick verification.',
-    category: 'image',
-  },
-  {
-    id: 'image-border',
-    label: 'Add image border',
-    tagline: 'Frame any image.',
-    description: 'Pick thickness and color for a clean, even border.',
-    category: 'image',
-  },
-  {
-    id: 'code-diff',
-    label: 'Code diff checker',
-    tagline: 'Spot additions/removals.',
-    description: 'Paste two snippets and see highlighted differences.',
-    category: 'code',
-  },
-  {
-    id: 'count-text',
-    label: 'Word & char count',
-    tagline: 'Quick text metrics.',
-    description: 'Counts words, characters, and lines live as you type.',
-    category: 'text',
-  },
-]
+const getToolPath = (toolId: ToolKey) => `/tools/${toolId}`
+const getToolFromPath = (pathname: string): ToolKey => {
+  const parts = pathname.split('/').filter(Boolean)
+  const fallback: ToolKey = 'compress'
+
+  if (parts.length === 0 || pathname === '/home') return fallback
+
+  const slug = parts[0] === 'tools' ? parts[1] : parts[0]
+  if (slug && tools.some((tool) => tool.id === slug)) {
+    return slug as ToolKey
+  }
+
+  return fallback
+}
 
 const formatBytes = (size: number) => {
   if (size === 0) return '0 B'
@@ -306,7 +166,14 @@ const canvasToBlob = (canvas: HTMLCanvasElement, type: string, quality?: number)
   })
 
 function App() {
-  const [activeTool, setActiveTool] = useState<ToolKey>('compress')
+  const [isEmbedded] = useState(() => {
+    if (typeof window === 'undefined') return false
+    return new URLSearchParams(window.location.search).get('embed') === '1'
+  })
+  const [activeTool, setActiveTool] = useState<ToolKey>(() => {
+    if (typeof window === 'undefined') return 'compress'
+    return getToolFromPath(window.location.pathname)
+  })
   const [compressionPreset, setCompressionPreset] = useState<CompressionChoice>('medium')
   const [customCompression, setCustomCompression] = useState(0.82)
   const [compressFile, setCompressFile] = useState<File | null>(null)
@@ -407,7 +274,6 @@ function App() {
   }, [compressFile, compressionPreset, customCompression])
   const navigate = useNavigate()
   const location = useLocation()
-  const showHome = location.pathname === '/' || location.pathname === '/home'
 
   const visibleTools = useMemo(() => {
     const query = toolSearch.trim().toLowerCase()
@@ -500,17 +366,88 @@ function App() {
   useEffect(() => () => clearUploadFeedbackTimers(), [])
 
   useEffect(() => {
-    if (showHome) return
-    const path = location.pathname.replace('/', '') || 'compress'
-    if (tools.some((t) => t.id === path)) {
-      setActiveTool(path as ToolKey)
+    const nextTool = getToolFromPath(location.pathname)
+    if (nextTool !== activeTool) {
+      setActiveTool(nextTool)
     }
-  }, [location.pathname, showHome])
+  }, [activeTool, location.pathname])
 
   useEffect(() => {
-    if (showHome) return
-    navigate(`/${activeTool}`, { replace: false })
-  }, [activeTool, navigate, showHome])
+    const nextPath = getToolPath(activeTool)
+    if (location.pathname !== nextPath) {
+      navigate(
+        {
+          pathname: nextPath,
+          search: location.search,
+        },
+        {
+          replace:
+            location.pathname === '/' ||
+            location.pathname === '/home' ||
+            !location.pathname.startsWith('/tools/'),
+        },
+      )
+    }
+  }, [activeTool, location.pathname, location.search, navigate])
+
+  useEffect(() => {
+    if (typeof document === 'undefined') return undefined
+    if (isEmbedded) {
+      document.body.classList.add('toolzite-embed')
+      document.getElementById('root')?.classList.add('toolzite-embed-root')
+    }
+
+    return () => {
+      document.body.classList.remove('toolzite-embed')
+      document.getElementById('root')?.classList.remove('toolzite-embed-root')
+    }
+  }, [isEmbedded])
+
+  useEffect(() => {
+    if (!isEmbedded || typeof window === 'undefined') return undefined
+
+    const postHeight = () => {
+      window.parent.postMessage(
+        {
+          type: 'toolzite:embed-height',
+          kind: 'pdf',
+          height: Math.max(document.body.scrollHeight, document.documentElement.scrollHeight),
+        },
+        '*',
+      )
+    }
+
+    const postRoute = () => {
+      window.parent.postMessage(
+        {
+          type: 'toolzite:embed-route',
+          kind: 'pdf',
+          path: window.location.pathname,
+        },
+        '*',
+      )
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      postRoute()
+      postHeight()
+    })
+
+    const resizeObserver =
+      typeof ResizeObserver !== 'undefined'
+        ? new ResizeObserver(() => postHeight())
+        : null
+
+    resizeObserver?.observe(document.body)
+    resizeObserver?.observe(document.documentElement)
+    window.addEventListener('resize', postHeight)
+
+    return () => {
+      window.cancelAnimationFrame(frame)
+      resizeObserver?.disconnect()
+      window.removeEventListener('resize', postHeight)
+    }
+  }, [activeTool, isEmbedded, location.pathname])
 
   const onCompressInput = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -2277,90 +2214,123 @@ function App() {
   const workspaceStyle = { '--upload-progress': `${uploadProgress}%` } as CSSProperties
 
   return (
-    <div className="app">
-      <aside className="sidebar">
-        <div className="brand">
-          <div className="badge">toolzite</div>
-          <p className="brand-title">Client-side doc lab</p>
-          <p className="muted tiny">Every tool runs locally in your browser.</p>
-        </div>
-        <div className="control">
-          <input
-            type="text"
-            placeholder="Search tools…"
-            value={toolSearch}
-            onChange={(e) => setToolSearch(e.target.value)}
-          />
-        </div>
-        <div className="pill-row">
-          {['all', 'pdf', 'image', 'code', 'text'].map((value) => (
-            <button
-              key={value}
-              className={`pill ${category === value ? 'pill-active' : ''}`}
-              onClick={() => setCategory(value as typeof category)}
-            >
-              <span className="pill-title">{value.toUpperCase()}</span>
-            </button>
-          ))}
-        </div>
-        <div className="tool-stack scrollable">
-          {visibleTools.map((tool) => (
-            <button
-              key={tool.id}
-              className={`tool ${tool.id === activeTool ? 'active' : ''}`}
-              onClick={() => {
-                setActiveTool(tool.id)
-                resetMessages()
-              }}
-            >
-              <div>
-                <p className="tool-label">{tool.label}</p>
-                <p className="muted tiny">{tool.tagline}</p>
-              </div>
-              <span>↗</span>
-            </button>
-          ))}
-        </div>
-      </aside>
-
-      <main
-        className={`workspace ${uploading ? 'is-uploading' : ''} ${uploadComplete ? 'upload-complete' : ''}`}
-        onChangeCapture={onFileInputChangeCapture}
-        style={workspaceStyle}
-      >
-        <header className="hero">
-          <div>
-            <p className="eyebrow">Active tool</p>
-            <h1>{currentTool.label}</h1>
-            <p className="muted">{currentTool.description}</p>
+    <div className={`toolzite-shell${isEmbedded ? ' embed-mode' : ''}`}>
+      {!isEmbedded && (
+        <header className="utility-header">
+          <div className="utility-brand">
+            <a href="https://www.toolzite.com/" className="utility-brand-badge" aria-label="ToolZite home">
+              TZ
+            </a>
+            <div>
+              <p className="utility-brand-eyebrow">ToolZite</p>
+              <h1 className="utility-brand-title">Document, image, and browser-side utility tools.</h1>
+            </div>
           </div>
-          <div className="hero-badge">
-            <span className="message-icon" aria-hidden>
-              i
-            </span>
-            <p className="tiny">No upload to server. Local only.</p>
+          <div className="utility-nav">
+            <a href="https://www.toolzite.com/products">AI Tools</a>
+            <a href="https://www.toolzite.com/code-tools/algorithms/two-sum">Code Tools</a>
+            <a href="https://www.toolzite.com/ai-news">Resources</a>
+            <span className="utility-nav-pill">PDF Tools</span>
           </div>
         </header>
+      )}
 
-        {renderActiveTool()}
-
-        <div className="status-bar">
-          {error ? <p className="error">{error}</p> : <p className="muted">{status || 'Ready for your files.'}</p>}
-          <div className="status-right">
-            {(uploading || uploadComplete) && (
-              <div className="upload-progress-wrap" role="status" aria-live="polite">
-                <p className="muted tiny">
-                  {uploadComplete ? 'Upload complete' : `Uploading ${Math.round(uploadProgress)}%`}
-                </p>
-                <div className="upload-track" aria-hidden>
-                  <span style={{ width: `${uploadProgress}%` }} />
-                </div>
-              </div>
-            )}
-            {(isProcessing || uploading) && <span className="loader" aria-hidden />}
+      <div className="app">
+        <aside className="sidebar">
+          <div className="brand">
+            <div className="badge">ToolZite Utilities</div>
+            <p className="brand-title">Every file workflow under the same ToolZite hood.</p>
+            <p className="muted tiny">Each utility has its own direct URL and runs locally in your browser.</p>
           </div>
-        </div>
-      </main>
+          <div className="control">
+            <input
+              type="text"
+              placeholder="Search tools…"
+              value={toolSearch}
+              onChange={(e) => setToolSearch(e.target.value)}
+            />
+          </div>
+          <div className="pill-row">
+            {['all', 'pdf', 'image', 'code', 'text'].map((value) => (
+              <button
+                key={value}
+                className={`pill ${category === value ? 'pill-active' : ''}`}
+                onClick={() => setCategory(value as typeof category)}
+              >
+                <span className="pill-title">{value.toUpperCase()}</span>
+              </button>
+            ))}
+          </div>
+          <div className="tool-stack scrollable">
+            {visibleTools.map((tool) => (
+              <button
+                key={tool.id}
+                className={`tool ${tool.id === activeTool ? 'active' : ''}`}
+                onClick={() => {
+                  setActiveTool(tool.id)
+                  resetMessages()
+                }}
+              >
+                <div>
+                  <p className="tool-label">{tool.label}</p>
+                  <p className="muted tiny">{tool.tagline}</p>
+                </div>
+                <span>↗</span>
+              </button>
+            ))}
+          </div>
+        </aside>
+
+        <main
+          className={`workspace ${uploading ? 'is-uploading' : ''} ${uploadComplete ? 'upload-complete' : ''}`}
+          onChangeCapture={onFileInputChangeCapture}
+          style={workspaceStyle}
+        >
+          <header className="hero">
+            <div>
+              <p className="eyebrow">ToolZite active utility</p>
+              <h1>{currentTool.label}</h1>
+              <p className="muted">{currentTool.description}</p>
+            </div>
+            <div className="hero-badge">
+              <span className="message-icon" aria-hidden>
+                i
+              </span>
+              <p className="tiny">Direct route: {getToolPath(activeTool)}</p>
+            </div>
+          </header>
+
+          {renderActiveTool()}
+
+          <div className="status-bar">
+            {error ? <p className="error">{error}</p> : <p className="muted">{status || 'Ready for your files.'}</p>}
+            <div className="status-right">
+              {(uploading || uploadComplete) && (
+                <div className="upload-progress-wrap" role="status" aria-live="polite">
+                  <p className="muted tiny">
+                    {uploadComplete ? 'Upload complete' : `Uploading ${Math.round(uploadProgress)}%`}
+                  </p>
+                  <div className="upload-track" aria-hidden>
+                    <span style={{ width: `${uploadProgress}%` }} />
+                  </div>
+                </div>
+              )}
+              {(isProcessing || uploading) && <span className="loader" aria-hidden />}
+            </div>
+          </div>
+        </main>
+      </div>
+
+      {!isEmbedded && (
+        <footer className="utility-footer">
+          <span>ToolZite PDF and Utility Tools</span>
+          <div className="utility-footer-links">
+            <a href="https://www.toolzite.com/">ToolZite Home</a>
+            <a href="https://www.toolzite.com/allcategory">All Categories</a>
+            <a href={`https://www.toolzite.com/pdf-tools${getToolPath(activeTool)}`}>Share This Tool</a>
+          </div>
+        </footer>
+      )}
     </div>
   )
 }
