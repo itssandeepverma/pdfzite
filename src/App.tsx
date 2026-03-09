@@ -26,6 +26,7 @@ const compressionPresets: Record<
 }
 
 const getToolPath = (toolId: ToolKey) => `/tools/${toolId}`
+
 const getToolFromPath = (pathname: string): ToolKey => {
   const parts = pathname.split('/').filter(Boolean)
   const fallback: ToolKey = 'compress'
@@ -241,8 +242,7 @@ function App() {
   const [codeA, setCodeA] = useState('')
   const [codeB, setCodeB] = useState('')
   const [countInput, setCountInput] = useState('')
-  const [toolSearch, setToolSearch] = useState('')
-  const [category, setCategory] = useState<'all' | 'pdf' | 'image' | 'code' | 'text'>('all')
+  const [category, setCategory] = useState<'pdf' | 'image' | 'code' | 'text'>('pdf')
   const [isDraggingCrop, setIsDraggingCrop] = useState(false)
   const [cropDragStart, setCropDragStart] = useState<{ x: number; y: number } | null>(null)
   const cropFrameRef = useRef<HTMLDivElement | null>(null)
@@ -275,18 +275,7 @@ function App() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  const visibleTools = useMemo(() => {
-    const query = toolSearch.trim().toLowerCase()
-    return tools.filter((tool) => {
-      const matchesCategory = category === 'all' || tool.category === category
-      const matchesQuery =
-        !query ||
-        tool.label.toLowerCase().includes(query) ||
-        tool.description.toLowerCase().includes(query) ||
-        tool.tagline.toLowerCase().includes(query)
-      return matchesCategory && matchesQuery
-    })
-  }, [category, toolSearch])
+  const visibleTools = useMemo(() => tools.filter((tool) => tool.category === category), [category])
 
   const ImagePreview = ({ url, title }: { url: string | null; title: string }) => {
     if (!url) return null
@@ -401,6 +390,32 @@ function App() {
     return () => {
       document.body.classList.remove('toolzite-embed')
       document.getElementById('root')?.classList.remove('toolzite-embed-root')
+    }
+  }, [isEmbedded])
+
+  useEffect(() => {
+    if (!isEmbedded || typeof window === 'undefined' || typeof document === 'undefined') return undefined
+
+    const root = document.documentElement
+
+    const setEmbedViewportHeight = (height: number) => {
+      if (!Number.isFinite(height) || height <= 0) return
+      root.style.setProperty('--toolzite-embed-parent-vh', `${Math.round(height)}px`)
+    }
+
+    const handleMessage = (event: MessageEvent) => {
+      if (!event.data || typeof event.data !== 'object') return
+      if (event.data.type !== 'toolzite:embed-viewport' || event.data.kind !== 'pdf') return
+
+      setEmbedViewportHeight(Number(event.data.height))
+    }
+
+    setEmbedViewportHeight(window.innerHeight)
+    window.addEventListener('message', handleMessage)
+
+    return () => {
+      window.removeEventListener('message', handleMessage)
+      root.style.removeProperty('--toolzite-embed-parent-vh')
     }
   }, [isEmbedded])
 
@@ -2229,25 +2244,19 @@ function App() {
       )}
 
       <div className="app">
-        <aside className="sidebar">
-          <div className="control">
-            <input
-              type="text"
-              placeholder="Search tools…"
-              value={toolSearch}
-              onChange={(e) => setToolSearch(e.target.value)}
-            />
-          </div>
-          <div className="pill-row sidebar-pill-row">
-            {['all', 'pdf', 'image', 'code', 'text'].map((value) => (
-              <button
-                key={value}
-                className={`pill sidebar-pill ${category === value ? 'pill-active' : ''}`}
-                onClick={() => setCategory(value as typeof category)}
-              >
-                <span className="pill-title">{value.toUpperCase()}</span>
-              </button>
-            ))}
+        <section className="tool-browser">
+          <div className="tool-browser-head">
+            <div className="tool-category-row" aria-label="Tool categories">
+              {['pdf', 'image', 'code', 'text'].map((value) => (
+                <button
+                  key={value}
+                  className={`tool-category-pill ${category === value ? 'tool-category-pill-active' : ''}`}
+                  onClick={() => setCategory(value as typeof category)}
+                >
+                  {value.toUpperCase()}
+                </button>
+              ))}
+            </div>
           </div>
           <div className="tool-stack scrollable">
             {visibleTools.map((tool) => (
@@ -2263,14 +2272,11 @@ function App() {
                   resetMessages()
                 }}
               >
-                <div>
-                  <p className="tool-label">{tool.label}</p>
-                </div>
-                <span>↗</span>
+                <p className="tool-label">{tool.label}</p>
               </Link>
             ))}
           </div>
-        </aside>
+        </section>
 
         <main
           className={`workspace ${uploading ? 'is-uploading' : ''} ${uploadComplete ? 'upload-complete' : ''}`}
